@@ -24,6 +24,7 @@ delay(void)
 /***** Serial I/O code *****/
 
 #define COM1		0x3F8
+//#define COM1		0x2F8 // Really COM2
 
 #define COM_RX		0	// In:	Receive buffer (DLAB=0)
 #define COM_TX		0	// Out: Transmit buffer (DLAB=0)
@@ -75,6 +76,7 @@ serial_putc(int c)
 	outb(COM1 + COM_TX, c);
 }
 
+// See http://wiki.osdev.org/Serial_Ports#Programming_the_Serial_Communications_Port
 static void
 serial_init(void)
 {
@@ -134,7 +136,7 @@ cga_init(void)
 {
 	volatile uint16_t *cp;
 	uint16_t was;
-	unsigned pos;
+	unsigned int pos;
 
 	cp = (uint16_t*) (KERNBASE + CGA_BUF);
 	was = *cp;
@@ -155,6 +157,7 @@ cga_init(void)
 
 	crt_buf = (uint16_t*) cp;
 	crt_pos = pos;
+
 }
 
 
@@ -175,7 +178,7 @@ cga_putc(int c)
 		break;
 	case '\n':
 		crt_pos += CRT_COLS;
-		/* fallthru */
+		/* fallthru (unix) */
 	case '\r':
 		crt_pos -= (crt_pos % CRT_COLS);
 		break;
@@ -197,7 +200,7 @@ cga_putc(int c)
 
 		memmove(crt_buf, crt_buf + CRT_COLS, (CRT_SIZE - CRT_COLS) * sizeof(uint16_t));
 		for (i = CRT_SIZE - CRT_COLS; i < CRT_SIZE; i++)
-			crt_buf[i] = 0x0700 | ' ';
+					crt_buf[i] = 0x0700 | ' ';
 		crt_pos -= CRT_COLS;
 	}
 
@@ -206,6 +209,7 @@ cga_putc(int c)
 	outb(addr_6845 + 1, crt_pos >> 8);
 	outb(addr_6845, 15);
 	outb(addr_6845 + 1, crt_pos);
+
 }
 
 
@@ -286,10 +290,10 @@ static uint8_t shiftmap[256] =
 
 static uint8_t ctlmap[256] =
 {
-	NO,      NO,      NO,      NO,      NO,      NO,      NO,      NO,
-	NO,      NO,      NO,      NO,      NO,      NO,      NO,      NO,
-	C('Q'),  C('W'),  C('E'),  C('R'),  C('T'),  C('Y'),  C('U'),  C('I'),
-	C('O'),  C('P'),  NO,      NO,      '\r',    NO,      C('A'),  C('S'),
+	NO,      NO,      NO,      NO,      NO,      NO,      NO,      NO,      // 0x7
+	NO,      NO,      NO,      NO,      NO,      NO,      NO,      NO,      // 0xF
+	C('Q'),  C('W'),  C('E'),  C('R'),  C('T'),  C('Y'),  C('U'),  C('I'),  // 0x17
+	C('O'),  C('P'),  NO,      NO,      '\r',    NO,      C('A'),  C('S'),  // 0x1F
 	C('D'),  C('F'),  C('G'),  C('H'),  C('J'),  C('K'),  C('L'),  NO,
 	NO,      NO,      NO,      C('\\'), C('Z'),  C('X'),  C('C'),  C('V'),
 	C('B'),  C('N'),  C('M'),  NO,      NO,      C('/'),  NO,      NO,
@@ -308,9 +312,35 @@ static uint8_t *charcode[4] = {
 	ctlmap
 };
 
+static void
+kbd_print_state(uint32_t shift, uint8_t rawdata, int character, char *opt) {
+	// Don't print state if echo is on
+	if (iscons(0)) {
+		return;
+	}
+
+	cprintf("shift: %#x\t", shift);
+
+	if (rawdata != -1) {
+		cprintf("raw data: %#x\t", rawdata);
+	}
+	if (character != -1) {
+		if (character == 0)
+			cprintf("Corresponding character: (NULL)\t");
+		else
+			cprintf("Corresponding character: %c\t", (char) character);
+	}
+	if (opt != NULL) {
+		cprintf("-%s-", opt);
+	}
+	cprintf("\n");
+}
+
 /*
  * Get data from the keyboard.  If we finish a character, return it.  Else 0.
  * Return -1 if no data.
+ * http://www.computer-engineering.org/ps2keyboard/#General%20Description%20FN
+ * http://www.computer-engineering.org/ps2keyboard/scancodes1.html
  */
 static int
 kbd_proc_data(void)
@@ -330,12 +360,21 @@ kbd_proc_data(void)
 
 	if (data == 0xE0) {
 		// E0 escape character
+		kbd_print_state(shift, -1, -1, "BEGIN data == 0xE0");
 		shift |= E0ESC;
+		kbd_print_state(shift, -1, -1, "END   data == 0xE0");
 		return 0;
 	} else if (data & 0x80) {
 		// Key released
-		data = (shift & E0ESC ? data : data & 0x7F);
+		kbd_print_state(shift, data, -1, "BEGIN data & 0x80");
+		// In any case, data and data & 0x7F refer to the same thing in
+		// shiftcode, where data is subsequently used.
+		//data = (shift & E0ESC ? data : data & 0x7F);
+		data &= 0x7F;
+
+		// If shift character, turns it off. Turns off escape character.
 		shift &= ~(shiftcode[data] | E0ESC);
+		kbd_print_state(shift, data, -1, "END   data & 0x80");
 		return 0;
 	} else if (shift & E0ESC) {
 		// Last character was an E0 escape; or with 0x80
@@ -361,6 +400,7 @@ kbd_proc_data(void)
 		outb(0x92, 0x3); // courtesy of Chris Frost
 	}
 
+	kbd_print_state(shift, data, c, NULL);
 	return c;
 }
 
@@ -399,6 +439,8 @@ cons_intr(int (*proc)(void))
 
 	while ((c = (*proc)()) != -1) {
 		if (c == 0)
+			// kbd received one of two scan codes to form a letter,
+			// or shift/ctl/etc was pressed
 			continue;
 		cons.buf[cons.wpos++] = c;
 		if (cons.wpos == CONSBUFSIZE)
@@ -433,7 +475,7 @@ static void
 cons_putc(int c)
 {
 	serial_putc(c);
-	lpt_putc(c);
+	lpt_putc(c);    // Our QEMU machine doesn't redirect parallel anywhere
 	cga_putc(c);
 }
 

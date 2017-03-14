@@ -36,7 +36,7 @@ KERN_SRCFILES :=	kern/entry.S \
 KERN_SRCFILES := $(wildcard $(KERN_SRCFILES))
 
 # Binary program images to embed within the kernel.
-KERN_BINFILES := 
+KERN_BINFILES :=
 
 KERN_OBJFILES := $(patsubst %.c, $(OBJDIR)/%.o, $(KERN_SRCFILES))
 KERN_OBJFILES := $(patsubst %.S, $(OBJDIR)/%.o, $(KERN_OBJFILES))
@@ -45,20 +45,26 @@ KERN_OBJFILES := $(patsubst $(OBJDIR)/lib/%, $(OBJDIR)/kern/%, $(KERN_OBJFILES))
 KERN_BINFILES := $(patsubst %, $(OBJDIR)/%, $(KERN_BINFILES))
 
 # How to build kernel object files
-$(OBJDIR)/kern/%.o: kern/%.c $(OBJDIR)/.vars.KERN_CFLAGS
-	@echo + cc $<
-	@mkdir -p $(@D)
-	$(V)$(CC) -nostdinc $(KERN_CFLAGS) -c -o $@ $<
+define make-kernel-objects
+@echo + cc $<
+@mkdir -p $(@D)
+$(V)$(CC) -nostdinc $(KERN_CFLAGS) -c -o $@ $<
+endef
 
-$(OBJDIR)/kern/%.o: kern/%.S $(OBJDIR)/.vars.KERN_CFLAGS
-	@echo + as $<
-	@mkdir -p $(@D)
-	$(V)$(CC) -nostdinc $(KERN_CFLAGS) -c -o $@ $<
+kernel-objects-prereqs = $(SRC_FILES) $(OBJDIR)/.vars.KERN_CFLAGS
 
-$(OBJDIR)/kern/%.o: lib/%.c $(OBJDIR)/.vars.KERN_CFLAGS
-	@echo + cc $<
-	@mkdir -p $(@D)
-	$(V)$(CC) -nostdinc $(KERN_CFLAGS) -c -o $@ $<
+SRC_FILES := kern/%.c
+$(OBJDIR)/kern/%.o: $(kernel-objects-prereqs)
+	$(make-kernel-objects)
+
+SRC_FILES := kern/%.S
+$(OBJDIR)/kern/%.o: $(kernel-objects-prereqs)
+	$(make-kernel-objects)
+
+SRC_FILES := lib/%.c
+$(OBJDIR)/kern/%.o: $(kernel-objects-prereqs)
+	$(make-kernel-objects)
+
 
 # Special flags for kern/init
 $(OBJDIR)/kern/init.o: override KERN_CFLAGS+=$(INIT_CFLAGS)

@@ -1056,4 +1056,3 @@ pte_t entry_pgtable[NPTENTRIES] = {
 	0x3fe000 | PTE_P | PTE_W,
 	0x3ff000 | PTE_P | PTE_W,
 };
-

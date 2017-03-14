@@ -5,6 +5,8 @@ OUTPUT_FORMAT("elf32-i386", "elf32-i386", "elf32-i386")
 OUTPUT_ARCH(i386)
 ENTRY(_start)
 
+/* TODO: kernel's program headers have a LOAD for .text and .data only.
+         Where is that indicated? */
 SECTIONS
 {
 	/* Link the kernel at this address: "." means the current address */
