@@ -9,7 +9,6 @@
 #include <kern/pmap.h>
 #include <kern/kclock.h>
 
-
 void
 i386_init(void)
 {
@@ -25,6 +24,7 @@ i386_init(void)
 	cons_init();
 
 	cprintf("6828 decimal is %o octal!\n", 6828);
+
 
 	// Lab 2 memory management initialization functions
 	mem_init();
