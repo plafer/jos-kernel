@@ -14,6 +14,7 @@ extern char bootstacktop[], bootstack[];
 
 extern struct PageInfo *pages;
 extern size_t npages;
+extern size_t num_page_alloced;
 
 extern pde_t *kern_pgdir;
 
@@ -63,8 +64,11 @@ void	page_decref(struct PageInfo *pp);
 
 void	tlb_invalidate(pde_t *pgdir, void *va);
 
+
 int	user_mem_check(struct Env *env, const void *va, size_t len, int perm);
 void	user_mem_assert(struct Env *env, const void *va, size_t len, int perm);
+
+int num_free_pages(void);
 
 static inline physaddr_t
 page2pa(struct PageInfo *pp)

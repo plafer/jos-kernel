@@ -4,16 +4,16 @@
 #include <inc/memlayout.h>
 #include <inc/trap.h>
 
-# Shift Right Logical 
+# Shift Right Logical
 #define SRL(val, shamt)		(((val) >> (shamt)) & ~(-1 << (32 - (shamt))))
 
 
 ###################################################################
-# The kernel (this code) is linked at address ~(KERNBASE + 1 Meg), 
+# The kernel (this code) is linked at address ~(KERNBASE + 1 Meg),
 # but the bootloader loads it at address ~1 Meg.
-#	
+#
 # RELOC(x) maps a symbol x from its link address to its actual
-# location in physical memory (its load address).	 
+# location in physical memory (its load address).
 ###################################################################
 
 #define	RELOC(x) ((x) - KERNBASE)
@@ -39,6 +39,7 @@
 # bootloader to jump to the *physical* address of the entry point.
 .globl		_start
 _start = RELOC(entry)
+
 
 .globl entry
 entry:
@@ -92,6 +93,5 @@ spin:	jmp	spin
 	.globl		bootstack
 bootstack:
 	.space		KSTKSIZE
-	.globl		bootstacktop   
+	.globl		bootstacktop
 bootstacktop:
-

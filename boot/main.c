@@ -30,10 +30,11 @@
  **********************************************************************/
 
 #define SECTSIZE	512
-#define ELFHDR		((struct Elf *) 0x10000) // scratch space
+#define ELFHDR		((struct Elf *) 0x10000) // scratch space (8 Kb)
 
 void readsect(void*, uint32_t);
 void readseg(uint32_t, uint32_t, uint32_t);
+
 
 void
 bootmain(void)
@@ -41,6 +42,8 @@ bootmain(void)
 	struct Proghdr *ph, *eph;
 
 	// read 1st page off disk
+	// This procedure knows that the kernel starts at
+	// sector 1, so the offset is based off that.
 	readseg((uint32_t) ELFHDR, SECTSIZE*8, 0);
 
 	// is this a valid ELF?
@@ -122,4 +125,3 @@ readsect(void *dst, uint32_t offset)
 	// read a sector
 	insl(0x1F0, dst, SECTSIZE/4);
 }
-

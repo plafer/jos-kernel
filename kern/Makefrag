@@ -28,6 +28,7 @@ KERN_SRCFILES :=	kern/entry.S \
 			kern/sched.c \
 			kern/syscall.c \
 			kern/kdebug.c \
+			kern/cpuid.c \
 			lib/printfmt.c \
 			lib/readline.c \
 			lib/string.c
@@ -58,20 +59,26 @@ KERN_OBJFILES := $(patsubst $(OBJDIR)/lib/%, $(OBJDIR)/kern/%, $(KERN_OBJFILES))
 KERN_BINFILES := $(patsubst %, $(OBJDIR)/%, $(KERN_BINFILES))
 
 # How to build kernel object files
-$(OBJDIR)/kern/%.o: kern/%.c $(OBJDIR)/.vars.KERN_CFLAGS
-	@echo + cc $<
-	@mkdir -p $(@D)
-	$(V)$(CC) -nostdinc $(KERN_CFLAGS) -c -o $@ $<
+define make-kernel-objects
+@echo + cc $<
+@mkdir -p $(@D)
+$(V)$(CC) -nostdinc $(KERN_CFLAGS) -c -o $@ $<
+endef
 
-$(OBJDIR)/kern/%.o: kern/%.S $(OBJDIR)/.vars.KERN_CFLAGS
-	@echo + as $<
-	@mkdir -p $(@D)
-	$(V)$(CC) -nostdinc $(KERN_CFLAGS) -c -o $@ $<
+kernel-objects-prereqs = $(SRC_FILES) $(OBJDIR)/.vars.KERN_CFLAGS
 
-$(OBJDIR)/kern/%.o: lib/%.c $(OBJDIR)/.vars.KERN_CFLAGS
-	@echo + cc $<
-	@mkdir -p $(@D)
-	$(V)$(CC) -nostdinc $(KERN_CFLAGS) -c -o $@ $<
+SRC_FILES := kern/%.c
+$(OBJDIR)/kern/%.o: $(kernel-objects-prereqs)
+	$(make-kernel-objects)
+
+SRC_FILES := kern/%.S
+$(OBJDIR)/kern/%.o: $(kernel-objects-prereqs)
+	$(make-kernel-objects)
+
+SRC_FILES := lib/%.c
+$(OBJDIR)/kern/%.o: $(kernel-objects-prereqs)
+	$(make-kernel-objects)
+
 
 # Special flags for kern/init
 $(OBJDIR)/kern/init.o: override KERN_CFLAGS+=$(INIT_CFLAGS)

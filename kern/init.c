@@ -10,6 +10,7 @@
 #include <kern/kclock.h>
 #include <kern/env.h>
 #include <kern/trap.h>
+#include <kern/cpuid.h>
 
 
 void
@@ -26,7 +27,7 @@ i386_init(void)
 	// Can't call cprintf until after we do this!
 	cons_init();
 
-	cprintf("6828 decimal is %o octal!\n", 6828);
+	cprintf("Vendor is: %s\n", cpu_vendorID());
 
 	// Lab 2 memory management initialization functions
 	mem_init();
