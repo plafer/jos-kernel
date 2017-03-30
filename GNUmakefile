@@ -154,7 +154,7 @@ QEMUOPTS += $(QEMUEXTRA)
 gdb:
 	gdb -n -x .gdbinit
 
-pre-qemu: .gdbinit
+pre-qemu: .gdbinit TAGS
 
 qemu: $(IMAGES) pre-qemu
 	$(QEMU) $(QEMUOPTS)
@@ -335,6 +335,10 @@ $(OBJDIR)/.deps: $(foreach dir, $(OBJDIRS), $(wildcard $(OBJDIR)/$(dir)/*.d))
 	@$(PERL) mergedep.pl $@ $^
 
 -include $(OBJDIR)/.deps
+
+.PHONY: TAGS
+TAGS:
+	etags -R inc kern lib user --exclude=*.asm
 
 always:
 	@:
