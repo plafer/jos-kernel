@@ -336,9 +336,10 @@ $(OBJDIR)/.deps: $(foreach dir, $(OBJDIRS), $(wildcard $(OBJDIR)/$(dir)/*.d))
 
 -include $(OBJDIR)/.deps
 
+# https://www.emacswiki.org/emacs/RecursiveTags#toc4
 .PHONY: TAGS
 TAGS:
-	etags -R inc kern lib user --exclude=*.asm
+	find . -name "*.[chS]" -print | xargs etags --append
 
 always:
 	@:

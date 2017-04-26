@@ -70,6 +70,8 @@ void	user_mem_assert(struct Env *env, const void *va, size_t len, int perm);
 
 int num_free_pages(void);
 
+pte_t *pgdir_walk(pde_t *pgdir, const void *va, int create);
+
 static inline physaddr_t
 page2pa(struct PageInfo *pp)
 {
@@ -89,7 +91,5 @@ page2kva(struct PageInfo *pp)
 {
 	return KADDR(page2pa(pp));
 }
-
-pte_t *pgdir_walk(pde_t *pgdir, const void *va, int create);
 
 #endif /* !JOS_KERN_PMAP_H */

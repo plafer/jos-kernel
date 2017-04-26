@@ -113,7 +113,8 @@ boot_alloc(uint32_t n)
 	result = nextfree;
 	nextfree += ROUNDUP((int) n, PGSIZE);
 
-	// We are OOM when we're past the KERNBASE + 4MB bar (what entry_pgdir gives us)
+	// We are OOM when we're past the KERNBASE + 4MB bar
+	// (what entry_pgdir gives us)
 	if (nextfree > (char *) (KERNBASE + (4 * MB))) {
 		// out of memory
 		_panic(__FILE__, __LINE__, "boot_alloc: out of memory");
@@ -186,6 +187,8 @@ mem_init(void)
 	//////////////////////////////////////////////////////////////////////
 	// Make 'envs' point to an array of size 'NENV' of 'struct Env'.
 	// LAB 3: Your code here.
+	envs = boot_alloc(NENV * sizeof(*envs));
+	memset(envs, 0, sizeof(*envs));
 
 	//////////////////////////////////////////////////////////////////////
 	// Now that we've allocated the initial kernel data structures, we set
@@ -207,15 +210,10 @@ mem_init(void)
 	// Permissions:
 	//    - the new image at UPAGES -- kernel R, user R
 	//      (ie. perm = PTE_U | PTE_P)
-	//    TODO: Why do we care about pages themselves (i.e. page directory entries)?
-	//    The only way that a user can get a reference to a page is by using
-	//    kernpgdir[PDX(UVPT)], which is RO for users... So users WILL be able
-	//    to read the pages
 	//    - pages itself -- kernel RW, user NONE
 	// Your code goes here:
 	boot_map_region(kern_pgdir, UPAGES, npages * sizeof(*pages),
 			PADDR(pages), PTE_U);
-
 
 	//////////////////////////////////////////////////////////////////////
 	// Map the 'envs' array read-only by the user at linear address UENVS
@@ -224,6 +222,8 @@ mem_init(void)
 	//    - the new image at UENVS  -- kernel R, user R
 	//    - envs itself -- kernel RW, user NONE
 	// LAB 3: Your code here.
+	boot_map_region(kern_pgdir, UENVS, NENV * sizeof(*envs),
+			PADDR(envs), PTE_U);
 
 	//////////////////////////////////////////////////////////////////////
 	// Use the physical memory that 'bootstack' refers to as the kernel
