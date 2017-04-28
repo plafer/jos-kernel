@@ -88,3 +88,13 @@ _alltraps:
 
 	pushl %esp # tf argument to trap(struct Trapframe *tf)
 	call trap
+
+
+
+	.data
+	.globl trapentries
+trapentries:
+	.long trapentry0, trapentry1, trapentry2, trapentry3, trapentry4,   \
+	trapentry5, trapentry6, trapentry7, trapentry8, 0,trapentry10,      \
+	trapentry11, trapentry12, trapentry13, trapentry14, 0, trapentry16, \
+	trapentry17, trapentry18, trapentry19
