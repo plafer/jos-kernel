@@ -14,6 +14,7 @@ extern char bootstacktop[], bootstack[];
 
 extern struct PageInfo *pages;
 extern size_t npages;
+extern size_t num_page_alloced;
 
 extern pde_t *kern_pgdir;
 
@@ -68,6 +69,10 @@ void *	mmio_map_region(physaddr_t pa, size_t size);
 int	user_mem_check(struct Env *env, const void *va, size_t len, int perm);
 void	user_mem_assert(struct Env *env, const void *va, size_t len, int perm);
 
+int num_free_pages(void);
+
+pte_t *pgdir_walk(pde_t *pgdir, const void *va, int create);
+
 static inline physaddr_t
 page2pa(struct PageInfo *pp)
 {
@@ -87,7 +92,5 @@ page2kva(struct PageInfo *pp)
 {
 	return KADDR(page2pa(pp));
 }
-
-pte_t *pgdir_walk(pde_t *pgdir, const void *va, int create);
 
 #endif /* !JOS_KERN_PMAP_H */

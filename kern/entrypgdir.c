@@ -23,6 +23,7 @@ pde_t entry_pgdir[NPDENTRIES] = {
 	[0]
 		= ((uintptr_t)entry_pgtable - KERNBASE) + PTE_P,
 	// Map VA's [KERNBASE, KERNBASE+4MB) to PA's [0, 4MB)
+	// Why do we have PTE_W? Because CR0_WP is enabled!
 	[KERNBASE>>PDXSHIFT]
 		= ((uintptr_t)entry_pgtable - KERNBASE) + PTE_P + PTE_W
 };
@@ -1056,4 +1057,3 @@ pte_t entry_pgtable[NPTENTRIES] = {
 	0x3fe000 | PTE_P | PTE_W,
 	0x3ff000 | PTE_P | PTE_W,
 };
-

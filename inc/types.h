@@ -39,6 +39,15 @@ typedef int32_t ssize_t;
 // off_t is used for file offsets and lengths.
 typedef int32_t off_t;
 
+// Log levels
+enum LOG_LEVEL {
+	LOG_DEBUG,
+	LOG_INFO,
+	LOG_CRIT,
+	LOG_NUM,
+};
+
+
 // Efficient min and max operations
 #define MIN(_a, _b)						\
 ({								\
@@ -71,5 +80,9 @@ typedef int32_t off_t;
 
 // Return the offset of 'member' relative to the beginning of a struct type
 #define offsetof(type, member)  ((size_t) (&((type*)0)->member))
+
+#define KB (1 << 10)
+#define MB (1 << 20)
+#define GB (1 << 30)
 
 #endif /* !JOS_INC_TYPES_H */
