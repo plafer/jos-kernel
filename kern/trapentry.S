@@ -73,6 +73,7 @@ TRAPHANDLER_NOEC(trapentry19, T_SIMDERR)
 /*
  * Exceptions 20-31 intel reserved
  */
+TRAPHANDLER_NOEC(trapentry48, T_SYSCALL)
 
 /*
  * Lab 3: Your code here for _alltraps
@@ -94,7 +95,52 @@ _alltraps:
 	.data
 	.globl trapentries
 trapentries:
-	.long trapentry0, trapentry1, trapentry2, trapentry3, trapentry4,   \
-	trapentry5, trapentry6, trapentry7, trapentry8, 0,trapentry10,      \
-	trapentry11, trapentry12, trapentry13, trapentry14, 0, trapentry16, \
-	trapentry17, trapentry18, trapentry19
+	.long trapentry0
+	.long trapentry1
+	.long trapentry2
+	.long trapentry3
+	.long trapentry4
+	.long trapentry5
+	.long trapentry6
+	.long trapentry7
+	.long trapentry8
+	.long 0
+	.long trapentry10
+	.long trapentry11
+	.long trapentry12
+	.long trapentry13
+	.long trapentry14
+	.long 0
+	.long trapentry16
+	.long trapentry17
+	.long trapentry18
+	.long trapentry19
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long 0
+	.long trapentry48

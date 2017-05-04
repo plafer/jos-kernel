@@ -662,7 +662,23 @@ static uintptr_t user_mem_check_addr;
 int
 user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 {
-	// LAB 3: Your code here.
+	char *low = (char *) ROUNDDOWN(va, PGSIZE);
+	const char *high = ROUNDUP((char *)va + len, PGSIZE);
+
+	for ( ; low < high; low += PGSIZE)
+	{
+		pte_t *pte;
+		pte = pgdir_walk(env->env_pgdir, low, 0);
+		if (pte == NULL || (*pte & perm) != perm)
+		{
+			if (ROUNDDOWN(va, PGSIZE) == low)
+				user_mem_check_addr = (uintptr_t) va;
+			else
+				user_mem_check_addr = (uintptr_t) low;
+
+			return -E_FAULT;
+		}
+	}
 
 	return 0;
 }

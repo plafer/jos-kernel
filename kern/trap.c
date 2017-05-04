@@ -69,7 +69,7 @@ trap_init(void)
 	SETGATE(idt[0], 0, GD_KT, trapentries[0], 0);
 	SETGATE(idt[1], 0, GD_KT, trapentries[1], 0);
 	SETGATE(idt[2], 0, GD_KT, trapentries[2], 0);
-	SETGATE(idt[3], 0, GD_KT, trapentries[3], 0);
+	SETGATE(idt[3], 0, GD_KT, trapentries[3], 3);
 	SETGATE(idt[4], 0, GD_KT, trapentries[4], 0);
 	SETGATE(idt[5], 0, GD_KT, trapentries[5], 0);
 	SETGATE(idt[6], 0, GD_KT, trapentries[6], 0);
@@ -87,6 +87,8 @@ trap_init(void)
 	SETGATE(idt[18], 0, GD_KT, trapentries[18], 0);
 	SETGATE(idt[19], 0, GD_KT, trapentries[19], 0);
 	/* idt[20-31] intel reserved */
+	/* SYSCALLs */
+	SETGATE(idt[48], 0, GD_KT, trapentries[48], 3);
 
 	// Per-CPU setup
 	trap_init_percpu();
@@ -165,6 +167,26 @@ trap_dispatch(struct Trapframe *tf)
 {
 	// Handle processor exceptions.
 	// LAB 3: Your code here.
+	switch (tf->tf_trapno)
+	{
+	case T_PGFLT:
+		page_fault_handler(tf);
+		return;
+	case T_BRKPT:
+		monitor(tf);
+		return;
+	case T_DEBUG:
+		monitor(tf);
+		return;
+	case T_SYSCALL:
+		tf->tf_regs.reg_eax = syscall(tf->tf_regs.reg_eax,
+					      tf->tf_regs.reg_edx,
+					      tf->tf_regs.reg_ecx,
+					      tf->tf_regs.reg_ebx,
+					      tf->tf_regs.reg_edi,
+					      tf->tf_regs.reg_esi);
+		return;
+	}
 
 	// Unexpected trap: The user process or the kernel has a bug.
 	print_trapframe(tf);
@@ -224,8 +246,10 @@ page_fault_handler(struct Trapframe *tf)
 	fault_va = rcr2();
 
 	// Handle kernel-mode page faults.
-
-	// LAB 3: Your code here.
+	if ((tf->tf_cs & 3) == 0)
+	{
+		panic("Unexpected trap in kernel mode");
+	}
 
 	// We've already handled kernel-mode exceptions, so if we get here,
 	// the page fault happened in user mode.

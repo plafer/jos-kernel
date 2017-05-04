@@ -41,6 +41,7 @@ KERN_SRCFILES := $(wildcard $(KERN_SRCFILES))
 KERN_BINFILES :=	user/hello \
 			user/buggyhello \
 			user/buggyhello2 \
+			user/debug \
 			user/evilhello \
 			user/testbss \
 			user/divzero \

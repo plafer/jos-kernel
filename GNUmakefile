@@ -154,7 +154,7 @@ QEMUOPTS += $(QEMUEXTRA)
 gdb:
 	gdb -n -x .gdbinit
 
-pre-qemu: .gdbinit TAGS
+pre-qemu: .gdbinit
 
 qemu: $(IMAGES) pre-qemu
 	$(QEMU) $(QEMUOPTS)

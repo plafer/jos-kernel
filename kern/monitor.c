@@ -13,7 +13,7 @@
 #include <kern/kdebug.h>
 #include <kern/trap.h>
 #include <kern/pmap.h>
-
+#include <kern/env.h>
 
 #define CMDBUF_SIZE	80	// enough for one VGA text line
 
@@ -35,7 +35,9 @@ static struct Command commands[] = {
 	{ "chgmappings", "Set, clear, or change the permissions of any mapping in "
 	  "the current address space", mon_chgmappings },
 	{ "memdump", "Dump the memory contents of a physical or virtual address range",
-	  mon_memdump }
+	  mon_memdump },
+	{ "next", "Single-step to the next instruction.", mon_next },
+	{ "cont", "Resume execution of program", mon_cont },
 };
 
 static int
@@ -400,7 +402,20 @@ mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 	return frame_count;
 }
 
+int
+mon_next(int argc, char **argv, struct Trapframe *tf)
+{
+	env_pop_tf(tf);
+	/* Never returns */
+}
 
+int
+mon_cont(int argc, char **argv, struct Trapframe *tf)
+{
+	tf->tf_eflags &= ~FL_TF;
+	env_pop_tf(tf);
+	/* Never returns */
+}
 
 /***** Kernel monitor command interpreter *****/
 
@@ -454,8 +469,12 @@ monitor(struct Trapframe *tf)
 	cprintf("Welcome to the JOS kernel monitor!\n");
 	cprintf("Type 'help' for a list of commands.\n");
 
+	// Ensure Eflags trap flag is set
 	if (tf != NULL)
+	{
+		tf->tf_eflags |= FL_TF;
 		print_trapframe(tf);
+	}
 
 	while (1) {
 		buf = readline("Hacker> ");
