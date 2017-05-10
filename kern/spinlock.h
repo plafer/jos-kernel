@@ -8,7 +8,7 @@
 
 // Mutual exclusion lock.
 struct spinlock {
-	unsigned locked;       // Is the lock held?
+	unsigned locked;       // is the lock held?
 
 #ifdef DEBUG_SPINLOCK
 	// For debugging:

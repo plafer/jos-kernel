@@ -126,6 +126,7 @@ env_init(void)
 	for (envp = envs, envlast = envs + NENV - 1; envp <= envlast; envp++)
 	{
 		*envp = (struct Env){
+			.env_status = ENV_FREE,
 			.env_link = (envp == envlast) ? NULL : envp + 1,
 			.env_id = 0,
 		};
@@ -272,6 +273,7 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 
 	// commit the allocation
 	env_free_list = e->env_link;
+	e->env_link = NULL;
 	*newenv_store = e;
 
 	cprintf("[%08x] new env %08x\n", curenv ? curenv->env_id : 0, e->env_id);
@@ -550,6 +552,12 @@ env_pop_tf(struct Trapframe *tf)
 	// Record the CPU we are running on for user-space debugging
 	curenv->env_cpunum = cpunum();
 
+	// Unlocking here is safe because all we're doing is modifying our
+	// cpu-specific stack, so no race conditions are possible.
+	// It'd be safe to unlock it in env_run() ATM but then we run the risk
+	// of modifiying this function to have a side effect outside cpu-private
+	// state AFTER the lock has been released.
+	unlock_kernel();
 	asm volatile(
 		"\tmovl %0,%%esp\n"
 		"\tpopal\n"

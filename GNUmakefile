@@ -334,6 +334,7 @@ $(OBJDIR)/.deps: $(foreach dir, $(OBJDIRS), $(wildcard $(OBJDIR)/$(dir)/*.d))
 # https://www.emacswiki.org/emacs/RecursiveTags#toc4
 .PHONY: TAGS
 TAGS:
+	rm TAGS
 	find . -name "*.[chS]" -print | xargs etags --append
 
 always:

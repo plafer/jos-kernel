@@ -33,10 +33,10 @@
 .set PROT_MODE_CSEG, 0x8	# kernel code segment selector
 .set PROT_MODE_DSEG, 0x10	# kernel data segment selector
 
-.code16           
+.code16
 .globl mpentry_start
 mpentry_start:
-	cli            
+	cli
 
 	xorw    %ax, %ax
 	movw    %ax, %ds
@@ -62,6 +62,7 @@ start32:
 
 	# Set up initial page table. We cannot use kern_pgdir yet because
 	# we are still running at a low EIP.
+	# TODO: We never jump into code at low EIP... Try loading kern_pgdir here
 	movl    $(RELOC(entry_pgdir)), %eax
 	movl    %eax, %cr3
 	# Turn on paging.
@@ -74,6 +75,10 @@ start32:
 	movl    $0x0, %ebp       # nuke frame pointer
 
 	# Call mp_main().  (Exercise for the reader: why the indirect call?)
+	# Ans: call with address in register does an *absolute* addressing,
+	# whereas call with immediate address does *relative* addressing. We
+	# can't use relative addressing here because this code doesn't execute
+	# where it is linked (see memmove() call in boot_aps()).
 	movl    $mp_main, %eax
 	call    *%eax
 
