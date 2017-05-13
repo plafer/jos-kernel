@@ -4,7 +4,7 @@
 // Page fault upcall entrypoint.
 
 // This is where we ask the kernel to redirect us to whenever we cause
-// a page fault in user space (see the call to sys_set_pgfault_handler
+// a page fault in user space (see the call to set_pgfault_handler
 // in pgfault.c).
 //
 // When a page fault actually occurs, the kernel switches our ESP to
@@ -37,7 +37,7 @@ _pgfault_upcall:
 	movl _pgfault_handler, %eax
 	call *%eax
 	addl $4, %esp			// pop function argument
-	
+
 	// Now the C page fault handler has returned and you must return
 	// to the trap time state.
 	// Push trap-time %eip onto the trap-time stack.
@@ -65,18 +65,22 @@ _pgfault_upcall:
 	// ways as registers become unavailable as scratch space.
 	//
 	// LAB 4: Your code here.
+	addl $8, %esp	// jumpover fault_va and utf_err
+	popal
 
-	// Restore the trap-time registers.  After you do this, you
-	// can no longer modify any general-purpose registers.
-	// LAB 4: Your code here.
+	// push trap-time eip on trap-time stack
+	pushl %eax
+	pushl %ebx
+	movl 8(%esp), %eax   // trap-time eip
+	movl 16(%esp), %ebx  // trap-time esp
+	subl $4, %ebx
+	movl %eax, (%ebx)    // "push" eip
+	popl %ebx
+	popl %eax
+	addl $4, %esp            // jump over eip
 
-	// Restore eflags from the stack.  After you do this, you can
-	// no longer use arithmetic operations or anything else that
-	// modifies eflags.
-	// LAB 4: Your code here.
+	popfl  // pop eflags
 
-	// Switch back to the adjusted trap-time stack.
-	// LAB 4: Your code here.
-
-	// Return to re-execute the instruction that faulted.
-	// LAB 4: Your code here.
+	// Switch back to the trap-time stack
+	popl %esp
+	jmp -4(%esp)  // we placed eip is right above esp

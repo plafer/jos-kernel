@@ -754,6 +754,8 @@ user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 	char *low = (char *) ROUNDDOWN(va, PGSIZE);
 	const char *high = ROUNDUP((char *)va + len, PGSIZE);
 
+	perm |= PTE_P;
+
 	for ( ; low < high; low += PGSIZE)
 	{
 		pte_t *pte;

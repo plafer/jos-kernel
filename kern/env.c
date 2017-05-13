@@ -607,3 +607,12 @@ env_run(struct Env *e)
 
 	env_pop_tf(&e->env_tf);
 }
+
+// TODO: REMOVE
+int
+env_can_handle_pgfault(struct Env *env)
+{
+	return env->env_pgfault_upcall != NULL &&
+		page_lookup(env->env_pgdir, (void *)(UXSTACKTOP - PGSIZE), NULL)
+		!= NULL;
+}

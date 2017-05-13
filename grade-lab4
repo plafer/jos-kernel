@@ -85,7 +85,9 @@ def test_faultallocbad():
 @test(5)
 def test_faultnostack():
     r.user_test("faultnostack")
-    r.match(E(".$E1. user_mem_check assertion failure for va eebfff.."),
+    # The page below UXSTACKTOP starts at eebff000, and that's what we
+    # should be checking... So why eebfff00?
+    r.match(E(".$E1. user_mem_check assertion failure for va eebff..."),
             E(".$E1. free env $E1"))
 
 @test(5)

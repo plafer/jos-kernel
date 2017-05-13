@@ -1,6 +1,8 @@
 // hello, world
 #include <inc/lib.h>
 
+#define uint unsigned int
+
 void
 umain(int argc, char **argv)
 {

@@ -307,6 +307,7 @@ trap(struct Trapframe *tf)
 }
 
 
+
 void
 page_fault_handler(struct Trapframe *tf)
 {
@@ -352,7 +353,46 @@ page_fault_handler(struct Trapframe *tf)
 	//   To change what the user environment runs, modify 'curenv->env_tf'
 	//   (the 'tf' variable points at 'curenv->env_tf').
 
+
 	// LAB 4: Your code here.
+	// 1. We check if the environment has a page fault handler, and if it
+	// has allocated a page for its exception stack.
+
+	if (curenv->env_pgfault_upcall != NULL)
+	{
+		uintptr_t traptime_esp = tf->tf_esp;
+
+		user_mem_assert(curenv, curenv->env_pgfault_upcall, 1, 0);
+		user_mem_assert(curenv, (void *)(UXSTACKTOP - PGSIZE), PGSIZE, PTE_W);
+
+
+		// In the case where esp is neither on the ustack nor on
+		// uxstack, we simply destroy the environment.
+		if (ON_STACK(tf->tf_esp, USTACKTOP))
+			tf->tf_esp = UXSTACKTOP;
+
+		if (ON_STACK(tf->tf_esp, UXSTACKTOP) &&
+		    ON_STACK(tf->tf_esp - sizeof(struct UTrapframe) - 4,
+			     UXSTACKTOP))
+		{
+			struct UTrapframe *utf;
+
+			tf->tf_esp -= (sizeof(struct UTrapframe) + 4);
+			utf = (struct UTrapframe *) tf->tf_esp;
+
+			utf->utf_fault_va = fault_va;
+			utf->utf_err = tf->tf_err;
+			utf->utf_regs = tf->tf_regs;
+			utf->utf_eip = tf->tf_eip;
+			utf->utf_eflags = tf->tf_eflags;
+			utf->utf_esp = traptime_esp;
+
+			// Make the environment execute its pgfault handler
+			tf->tf_eip = (uintptr_t) curenv->env_pgfault_upcall;
+
+			return;
+		}
+	}
 
 	// Destroy the environment that caused the fault.
 	cprintf("[%08x] user fault va %08x ip %08x\n",

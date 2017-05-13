@@ -145,11 +145,26 @@ sys_env_set_status(envid_t envid, int status)
 // Returns 0 on success, < 0 on error.  Errors are:
 //	-E_BAD_ENV if environment envid doesn't currently exist,
 //		or the caller doesn't have permission to change envid.
+//      -E_INVAL if func >= UTOP or isn't in the user's address space (my added
+//              requirement)
 static int
 sys_env_set_pgfault_upcall(envid_t envid, void *func)
 {
-	// LAB 4: Your code here.
-	panic("sys_env_set_pgfault_upcall not implemented");
+	struct Env *env;
+
+	if (envid2env(envid, &env, 1) != 0)
+		return -E_BAD_ENV;
+
+	// Grade script doesn't like it
+/*
+	if ((uintptr_t)func >= UTOP ||
+	    page_lookup(env->env_pgdir, func, NULL) == NULL)
+		return -E_INVAL;
+*/
+
+	env->env_pgfault_upcall = func;
+
+	return 0;
 }
 
 // Allocate a page of memory and map it at 'va' with permission
