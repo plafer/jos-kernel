@@ -94,6 +94,23 @@ trap_init(void)
 	SETGATE(idt[18], 0, GD_KT, trapentries[18], 0);
 	SETGATE(idt[19], 0, GD_KT, trapentries[19], 0);
 	/* idt[20-31] intel reserved */
+	// PIC interrupts
+	SETGATE(idt[32], 0, GD_KT, trapentries[32], 0);
+	SETGATE(idt[33], 0, GD_KT, trapentries[33], 0);
+	SETGATE(idt[34], 0, GD_KT, trapentries[34], 0);
+	SETGATE(idt[35], 0, GD_KT, trapentries[35], 0);
+	SETGATE(idt[36], 0, GD_KT, trapentries[36], 0);
+	SETGATE(idt[37], 0, GD_KT, trapentries[37], 0);
+	SETGATE(idt[38], 0, GD_KT, trapentries[38], 0);
+	SETGATE(idt[39], 0, GD_KT, trapentries[39], 0);
+	SETGATE(idt[40], 0, GD_KT, trapentries[40], 0);
+	SETGATE(idt[41], 0, GD_KT, trapentries[41], 0);
+	SETGATE(idt[42], 0, GD_KT, trapentries[42], 0);
+	SETGATE(idt[43], 0, GD_KT, trapentries[43], 0);
+	SETGATE(idt[44], 0, GD_KT, trapentries[44], 0);
+	SETGATE(idt[45], 0, GD_KT, trapentries[45], 0);
+	SETGATE(idt[46], 0, GD_KT, trapentries[46], 0);
+	SETGATE(idt[47], 0, GD_KT, trapentries[47], 0);
 	/* SYSCALLs */
 	SETGATE(idt[48], 0, GD_KT, trapentries[48], 3);
 
@@ -233,6 +250,11 @@ trap_dispatch(struct Trapframe *tf)
 	// Handle clock interrupts. Don't forget to acknowledge the
 	// interrupt using lapic_eoi() before calling the scheduler!
 	// LAB 4: Your code here.
+	if (tf->tf_trapno == IRQ_OFFSET + IRQ_TIMER) {
+		lapic_eoi();
+		sched_yield();
+	}
+
 
 	// Unexpected trap: The user process or the kernel has a bug.
 	print_trapframe(tf);

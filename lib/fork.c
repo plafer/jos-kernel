@@ -12,6 +12,9 @@ extern void _pgfault_upcall(void);
 //
 // Custom page fault handler - if faulting page is copy-on-write,
 // map in our own private writable copy.
+// TODO: Check the corresponding page (using UPAGES); if the page is COW but the
+// reference count is 1, simply remap the same page RW (this would happen when,
+// for example, the child has exited and freed all its pages).
 //
 static void
 pgfault(struct UTrapframe *utf)

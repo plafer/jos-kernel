@@ -336,8 +336,52 @@ sys_page_unmap(envid_t envid, void *va)
 static int
 sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 {
-	// LAB 4: Your code here.
-	panic("sys_ipc_try_send not implemented");
+	struct Env *recv_env;
+	struct PageInfo *map_page;
+	pte_t *map_pte;
+
+	if (envid2env(envid, &recv_env, 0) != 0)
+		return -E_BAD_ENV;
+
+	if (!recv_env->env_ipc_recving)
+		return -E_IPC_NOT_RECV;
+
+	if ((uintptr_t)srcva < UTOP &&
+	    (uintptr_t)recv_env->env_ipc_dstva < UTOP)
+	{
+		if (!ALIGNED_USER_ADDR(srcva))
+			return -E_INVAL;
+		if (!VALID_USER_PERM(perm))
+			return -E_INVAL;
+
+		if ((map_page = page_lookup(curenv->env_pgdir, srcva, &map_pte))
+		    == NULL)
+			return -E_INVAL;
+		if ((perm & PTE_W) && !(*map_pte & PTE_W))
+			return -E_INVAL;
+
+		// We don't use sys_page_map because it always sets the
+		// checkperm flag in envid2env.
+		if (page_insert(recv_env->env_pgdir, map_page,
+				recv_env->env_ipc_dstva, perm) != 0)
+			return -E_NO_MEM;
+
+		recv_env->env_ipc_perm = perm;
+	}
+	else
+	{
+		recv_env->env_ipc_perm = 0;
+	}
+
+	recv_env->env_ipc_recving = false;
+	recv_env->env_ipc_value = value;
+	recv_env->env_ipc_from = curenv->env_id;
+
+	// Make recv_env return 0
+	recv_env->env_tf.tf_regs.reg_eax = 0;
+	recv_env->env_status = ENV_RUNNABLE;
+
+	return 0;
 }
 
 // Block until a value is ready.  Record that you want to receive
@@ -354,8 +398,15 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 static int
 sys_ipc_recv(void *dstva)
 {
-	// LAB 4: Your code here.
-	panic("sys_ipc_recv not implemented");
+	if ((uintptr_t)dstva < UTOP && !((uintptr_t)dstva % PGSIZE == 0))
+		return -E_INVAL;
+
+	curenv->env_ipc_recving = true;
+	curenv->env_ipc_dstva = dstva;
+
+	curenv->env_status = ENV_NOT_RUNNABLE;
+	sched_yield();
+
 	return 0;
 }
 

@@ -22,10 +22,6 @@ int	envid2env(envid_t envid, struct Env **env_store, bool checkperm);
 void	env_run(struct Env *e) __attribute__((noreturn));
 void	env_pop_tf(struct Trapframe *tf) __attribute__((noreturn));
 
-// An environment can handle pgfaults if it has a handler set up and a page is
-// allocated under UXSTACKTOP
-int env_can_handle_pgfault(struct Env *env);
-
 // We consider just on the boundary of the top of the stack to be on the stack
 // because push instructions are valid. We also consider the lowest address to
 // be on the stack because pop instructions are valid.

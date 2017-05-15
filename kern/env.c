@@ -245,7 +245,9 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	// to prevent the register values
 	// of a prior environment inhabiting this Env structure
 	// from "leaking" into our new environment.
+	// Ensure interrupts are enabled
 	memset(&e->env_tf, 0, sizeof(e->env_tf));
+	e->env_tf.tf_eflags = FL_IF;
 
 	// Set up appropriate initial values for the segment registers.
 	// GD_UD is the user data segment selector in the GDT, and
@@ -606,13 +608,4 @@ env_run(struct Env *e)
 	lcr3(PADDR(e->env_pgdir));
 
 	env_pop_tf(&e->env_tf);
-}
-
-// TODO: REMOVE
-int
-env_can_handle_pgfault(struct Env *env)
-{
-	return env->env_pgfault_upcall != NULL &&
-		page_lookup(env->env_pgdir, (void *)(UXSTACKTOP - PGSIZE), NULL)
-		!= NULL;
 }

@@ -73,7 +73,24 @@ TRAPHANDLER_NOEC(trapentry18, T_MCHK)
 TRAPHANDLER_NOEC(trapentry19, T_SIMDERR)
 /*
  * Exceptions 20-31 intel reserved
- */
+*/
+
+TRAPHANDLER_NOEC(trapentry32, 32)
+TRAPHANDLER_NOEC(trapentry33, 33)
+TRAPHANDLER_NOEC(trapentry34, 34)
+TRAPHANDLER_NOEC(trapentry35, 35)
+TRAPHANDLER_NOEC(trapentry36, 36)
+TRAPHANDLER_NOEC(trapentry37, 37)
+TRAPHANDLER_NOEC(trapentry38, 38)
+TRAPHANDLER_NOEC(trapentry39, 39)
+TRAPHANDLER_NOEC(trapentry40, 40)
+TRAPHANDLER_NOEC(trapentry41, 41)
+TRAPHANDLER_NOEC(trapentry42, 42)
+TRAPHANDLER_NOEC(trapentry43, 43)
+TRAPHANDLER_NOEC(trapentry44, 44)
+TRAPHANDLER_NOEC(trapentry45, 45)
+TRAPHANDLER_NOEC(trapentry46, 46)
+TRAPHANDLER_NOEC(trapentry47, 47)
 TRAPHANDLER_NOEC(trapentry48, T_SYSCALL)
 
 /*
@@ -116,6 +133,7 @@ trapentries:
 	.long trapentry17
 	.long trapentry18
 	.long trapentry19
+	// 20
 	.long 0
 	.long 0
 	.long 0
@@ -126,22 +144,25 @@ trapentries:
 	.long 0
 	.long 0
 	.long 0
+	// 30
 	.long 0
 	.long 0
-	.long 0
-	.long 0
-	.long 0
-	.long 0
-	.long 0
-	.long 0
-	.long 0
-	.long 0
-	.long 0
-	.long 0
-	.long 0
-	.long 0
-	.long 0
-	.long 0
-	.long 0
-	.long 0
+	// IRQ_OFFSET = 32
+	.long trapentry32
+	.long trapentry33
+	.long trapentry34
+	.long trapentry35
+	.long trapentry36
+	.long trapentry37
+	.long trapentry38
+	.long trapentry39
+	// 40
+	.long trapentry40
+	.long trapentry41
+	.long trapentry42
+	.long trapentry43
+	.long trapentry44
+	.long trapentry45
+	.long trapentry46
+	.long trapentry47
 	.long trapentry48
