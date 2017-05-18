@@ -37,7 +37,15 @@ pgfault(struct UTrapframe *utf)
 	// to shifting 10)
 	pte = (pte_t *) (UVPT | (((uintptr_t)addr >> 12)*4));
 	if(!(err & FEC_WR) || !(*pte & PTE_COW))
-		panic("pgfault was not a write or page was not COW.");
+	{
+		panic("pgfault was not a write or page was not COW.\n"
+		      "fault va: %p\n"
+		      "err: %#x\n"
+		      "*pte: %#x\n"
+		      "eip: %p",
+		      addr, err, *pte, utf->utf_eip);
+	}
+
 
 	// Allocate a new page, map it at a temporary location (PFTEMP),
 	// copy the data from the old page to the new page, then move the new
