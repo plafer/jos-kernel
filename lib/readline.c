@@ -39,6 +39,13 @@ readline(const char *prompt)
 			buf[i] = 0;
 			return buf;
 		}
+		// If ^C, then clear current buffer and return null.
+		// Simulates SIGINT to bash on UNIX
+		else if (c == '\x03') {
+			cputchar('^');
+			cputchar('C');
+			cputchar('\n');
+			return NULL;
+		}
 	}
 }
-

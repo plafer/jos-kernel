@@ -96,6 +96,7 @@
 #define KSTACKTOP	KERNBASE
 #define KSTKSIZE	(8*PGSIZE)   		// size of a kernel stack
 #define KSTKGAP		(8*PGSIZE)   		// size of a kernel stack guard
+#define KSTACKTOPCPU(i) (KSTACKTOP - ((i) * (KSTKSIZE + KSTKGAP)))
 
 // Memory-mapped IO.
 #define MMIOLIM		(KSTACKTOP - PTSIZE)

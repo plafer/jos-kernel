@@ -43,18 +43,21 @@ static const char * const error_string[MAXERROR] =
  */
 static void
 printnum(void (*putch)(int, void*), void *putdat,
-	 unsigned long long num, unsigned base, int width, int padc)
+	 unsigned long long num, unsigned int base, int width, int padc)
 {
 	// first recursively print all preceding (more significant) digits
 	if (num >= base) {
 		printnum(putch, putdat, num / base, base, width - 1, padc);
 	} else {
+		// BUG: if padc is '-', then we should pad on the right.
+		//      This always pads on the left.
 		// print any needed pad characters before first digit
 		while (--width > 0)
 			putch(padc, putdat);
 	}
 
 	// then print this (the least significant) digit
+	// Note: If we supported "%X", we would need a check here
 	putch("0123456789abcdef"[num % base], putdat);
 }
 
@@ -165,6 +168,8 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 			goto reswitch;
 
 		// character
+		// BUG: doesn't take into account width:
+		//      %10c is equivalent to %c
 		case 'c':
 			putch(va_arg(ap, int), putdat);
 			break;
@@ -184,10 +189,17 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 		case 's':
 			if ((p = va_arg(ap, char *)) == NULL)
 				p = "(null)";
+			// width was specified && right-aligned
 			if (width > 0 && padc != '-')
+				// BUG: %010s will pad with 0's (printf doesn't)
 				for (width -= strnlen(p, precision); width > 0; width--)
 					putch(padc, putdat);
+			// Note: this here is why printf is vulnerable to format string
+			//       attacks.
 			for (; (ch = *p++) != '\0' && (precision < 0 || --precision >= 0); width--)
+				// BUG: altflag (#) is meaningless with a string in printf
+				// This modified version recognizes when characters won't print well
+				// ([' ', '~'] bound all "printable" characters
 				if (altflag && (ch < ' ' || ch > '~'))
 					putch('?', putdat);
 				else
@@ -197,6 +209,8 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 			break;
 
 		// (signed) decimal
+		// BUG: a negative int will be treated as positive:
+		// when cast to (long long), it never can be.
 		case 'd':
 			num = getint(&ap, lflag);
 			if ((long long) num < 0) {
@@ -214,16 +228,20 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 
 		// (unsigned) octal
 		case 'o':
-			// Replace this with your code.
-			putch('X', putdat);
-			putch('X', putdat);
-			putch('X', putdat);
-			break;
+			if (altflag) {
+				putch('0', putdat);
+				width--;
+			}
+			num = getuint(&ap, lflag);
+			base = 8;
+			goto number;
 
 		// pointer
 		case 'p':
 			putch('0', putdat);
 			putch('x', putdat);
+			// My fix (width adjustment)
+			width -= 2;
 			num = (unsigned long long)
 				(uintptr_t) va_arg(ap, void *);
 			base = 16;
@@ -231,6 +249,12 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 
 		// (unsigned) hexadecimal
 		case 'x':
+			// My fix (if altflag)
+			if (altflag) {
+				putch('0', putdat);
+				putch('x', putdat);
+				width -= 2;
+			}
 			num = getuint(&ap, lflag);
 			base = 16;
 		number:
@@ -305,5 +329,3 @@ snprintf(char *buf, int n, const char *fmt, ...)
 
 	return rc;
 }
-
-

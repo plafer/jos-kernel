@@ -41,6 +41,7 @@
 // construct linear address from indexes and offset
 #define PGADDR(d, t, o)	((void*) ((d) << PDXSHIFT | (t) << PTXSHIFT | (o)))
 
+
 // Page directory and page table constants.
 #define NPDENTRIES	1024		// page directory entries per page directory
 #define NPTENTRIES	1024		// page table entries per page table
@@ -74,6 +75,7 @@
 
 // Address in page table or page directory entry
 #define PTE_ADDR(pte)	((physaddr_t) (pte) & ~0xFFF)
+#define PTE_FLAGS(pte)  ((physaddr_t) (pte) & 0xFFF)
 
 // Control Register flags
 #define CR0_PE		0x00000001	// Protection Enable

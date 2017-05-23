@@ -12,9 +12,11 @@ V = @
 # out the following line to use those tools (as opposed to the i386-jos-elf
 # tools that the 6.828 make system looks for by default).
 #
-# GCCPREFIX=''
+GCCPREFIX=''
 
 # If the makefile cannot find your QEMU binary, uncomment the
 # following line and set it to the full path to QEMU.
 #
-# QEMU=
+# Use only if you need mit QEMUs "info pg"
+# To exit, Type "C-a x"
+QEMU=/usr/local/bin/mit-qemu-system-i386

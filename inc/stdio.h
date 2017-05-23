@@ -2,6 +2,7 @@
 #define JOS_INC_STDIO_H
 
 #include <inc/stdarg.h>
+#include <inc/types.h>
 
 #ifndef NULL
 #define NULL	((void *) 0)
@@ -21,6 +22,7 @@ int	vsnprintf(char *str, int size, const char *fmt, va_list);
 // lib/printf.c
 int	cprintf(const char *fmt, ...);
 int	vcprintf(const char *fmt, va_list);
+int     clogf(enum LOG_LEVEL lvl, char *subsys, const char *fmt, ...);
 
 // lib/fprintf.c
 int	printf(const char *fmt, ...);

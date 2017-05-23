@@ -22,6 +22,12 @@ int	envid2env(envid_t envid, struct Env **env_store, bool checkperm);
 void	env_run(struct Env *e) __attribute__((noreturn));
 void	env_pop_tf(struct Trapframe *tf) __attribute__((noreturn));
 
+// We consider just on the boundary of the top of the stack to be on the stack
+// because push instructions are valid. We also consider the lowest address to
+// be on the stack because pop instructions are valid.
+#define ON_STACK(addr, stacktop) (addr <= stacktop &&		\
+				  addr >= (stacktop - PGSIZE))
+
 // Without this extra macro, we couldn't pass macros like TEST to
 // ENV_CREATE because of the C pre-processor's argument prescan rule.
 #define ENV_PASTE3(x, y, z) x ## y ## z

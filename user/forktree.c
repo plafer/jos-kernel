@@ -35,4 +35,3 @@ umain(int argc, char **argv)
 {
 	forktree("");
 }
-

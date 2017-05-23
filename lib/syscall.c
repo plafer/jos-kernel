@@ -117,3 +117,10 @@ sys_ipc_recv(void *dstva)
 	return syscall(SYS_ipc_recv, 1, (uint32_t)dstva, 0, 0, 0, 0);
 }
 
+// Useless system call, we can check thisenv->env_cpunum instead (i.e. the
+// kernel data structure is exposed, no need for a system call).
+int
+sys_get_cpu(void)
+{
+	return syscall(SYS_get_cpu, 0, 0, 0, 0, 0, 0);
+}

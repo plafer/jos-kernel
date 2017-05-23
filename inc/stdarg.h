@@ -1,5 +1,6 @@
 /*	$NetBSD: stdarg.h,v 1.12 1995/12/25 23:15:31 mycroft Exp $	*/
 
+// TODO: Attempt to implement these yourself
 #ifndef JOS_INC_STDARG_H
 #define	JOS_INC_STDARG_H
 
