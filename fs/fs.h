@@ -23,6 +23,7 @@ int	ide_write(uint32_t secno, const void *src, size_t nsecs);
 
 /* bc.c */
 void*	diskaddr(uint32_t blockno);
+uint32_t  blocknum(void *addr);
 bool	va_is_mapped(void *va);
 bool	va_is_dirty(void *va);
 void	flush_block(void *addr);
@@ -46,4 +47,3 @@ int	alloc_block(void);
 
 /* test.c */
 void	fs_test(void);
-

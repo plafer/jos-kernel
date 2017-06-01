@@ -78,6 +78,7 @@ envid_t	ipc_find_env(enum EnvType type);
 // fork.c
 #define	PTE_SHARE	0x400
 envid_t	fork(void);
+int duppage(envid_t envid, unsigned pn);
 envid_t	sfork(void);	// Challenge!
 
 // fd.c

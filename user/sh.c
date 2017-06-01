@@ -55,7 +55,10 @@ again:
 			// then close the original 'fd'.
 
 			// LAB 5: Your code here.
-			panic("< redirection not implemented");
+			close(0);
+			fd = open(t, O_RDWR);
+			if (fd != 0)
+				panic("fd should have been 0: %d", fd);
 			break;
 
 		case '>':	// Output redirection
@@ -236,7 +239,7 @@ int
 gettoken(char *s, char **p1)
 {
 	static int c, nc;
-	static char* np1, *np2;
+	static char *np1, *np2;
 
 	if (s) {
 		nc = _gettoken(s, &np1, &np2);
@@ -319,4 +322,3 @@ umain(int argc, char **argv)
 			wait(r);
 	}
 }
-

@@ -301,7 +301,36 @@ map_segment(envid_t child, uintptr_t va, size_t memsz,
 static int
 copy_shared_pages(envid_t child)
 {
+	int i;
+	int r;
+
 	// LAB 5: Your code here.
+	for (i = 0; i <= PDX(UXSTACKTOP - PGSIZE); i++)
+	{
+		if (uvpd[i] & PTE_P)
+		{
+			int j;
+			// global uvpt array only enabled us to access the first
+			// page table; this is a more general solution.
+			pte_t *uvpt = (pte_t *) (UVPT | (i << 12));
+
+			// Scan the 2^10 page table entries
+			for (j = 0; j < (1 << 10); j++)
+			{
+				if ((uvpt[j] & PTE_SHARE) &&
+				    (uvpt[j] & PTE_P))
+				{
+					r = duppage(child, (i << 10) + j);
+					if (r < 0)
+					{
+						sys_env_destroy(child);
+						panic("duppage: %e", r);
+					}
+				}
+
+			}
+		}
+	}
+
 	return 0;
 }
-

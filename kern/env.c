@@ -294,6 +294,7 @@ region_alloc(struct Env *e, void *va, size_t len)
 {
 	struct PageInfo *page;
 	pte_t *pte;
+	uint32_t diff;
 
 	// LAB 3: Your code here.
 	// (But only if you need it for load_icode.)
@@ -302,7 +303,13 @@ region_alloc(struct Env *e, void *va, size_t len)
 	//   'va' and 'len' values that are not page-aligned.
 	//   You should round va down, and round (va + len) up.
 	//   (Watch out for corner-cases!)
+	diff = (uint32_t)va - (uint32_t)ROUNDDOWN(va, PGSIZE);
 	va = ROUNDDOWN(va, PGSIZE);
+
+	// e.g. va = 800020, and len = 3000.
+	// Round down va: va = 800000. But then len should be adjusted to
+	// account for the lost 20 (i.e. the "end va" is 803020).
+	len += diff;
 	len = ROUNDUP(len, PGSIZE);
 	if ((uintptr_t)va > (uintptr_t)va + len)
 		_panic(__FILE__, __LINE__, "region_alloc: va + len overflows");
@@ -463,7 +470,10 @@ env_create(uint8_t *binary, enum EnvType type)
 		_panic(__FILE__, __LINE__, "env_create: %e", err);
 
 	load_icode(env, binary);
+
 	env->env_type = type;
+	if (type == ENV_TYPE_FS)
+		env->env_tf.tf_eflags |= FL_IOPL_3;
 }
 
 //

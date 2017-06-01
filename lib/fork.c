@@ -84,7 +84,7 @@ pgfault(struct UTrapframe *utf)
 // Returns: 0 on success, < 0 on error.
 // It is also OK to panic on error.
 //
-static int
+int
 duppage(envid_t envid, unsigned pn)
 {
 	int r;
@@ -108,7 +108,14 @@ duppage(envid_t envid, unsigned pn)
 	// order and a child (3001) generated a pgfault in forktree.c when
 	// returning from fork() because the return address on the stack was 0;
 	// executing ret instruction generated the page fault.
-	if ((*pte & PTE_W) || (*pte & PTE_COW))
+	if ((*pte & PTE_SHARE))
+	{
+		perm = *pte & PTE_SYSCALL;
+		r = sys_page_map(0, page_va, envid, page_va, perm);
+		if (r < 0)
+			return r;
+	}
+	else
 	{
 		// Copy all syscall-allowed flags over except for PTE_W.
 		// Ensure that PTE_COW is in there
@@ -122,13 +129,6 @@ duppage(envid_t envid, unsigned pn)
 
 		// Remap parent copy-on-write
 		r = sys_page_map(0, page_va, 0, page_va, perm);
-		if (r < 0)
-			return r;
-	}
-	else
-	{
-		perm = *pte & PTE_SYSCALL;
-		r = sys_page_map(0, page_va, envid, page_va, perm);
 		if (r < 0)
 			return r;
 	}

@@ -23,7 +23,7 @@ umain(int argc, char **argv)
 }
 
 void
-duppage(envid_t dstenv, void *addr)
+dumbduppage(envid_t dstenv, void *addr)
 {
 	int r;
 
@@ -66,10 +66,10 @@ dumbfork(void)
 	// Eagerly copy our entire address space into the child.
 	// This is NOT what you should do in your fork implementation.
 	for (addr = (uint8_t*) UTEXT; addr < end; addr += PGSIZE)
-		duppage(envid, addr);
+		dumbduppage(envid, addr);
 
 	// Also copy the stack we are currently running on.
-	duppage(envid, ROUNDDOWN(&addr, PGSIZE));
+	dumbduppage(envid, ROUNDDOWN(&addr, PGSIZE));
 
 	// Start the child environment running
 	if ((r = sys_env_set_status(envid, ENV_RUNNABLE)) < 0)
@@ -77,4 +77,3 @@ dumbfork(void)
 
 	return envid;
 }
-

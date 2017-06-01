@@ -24,11 +24,11 @@ struct Dev {
 };
 
 struct FdFile {
-	int id;
+	int id;    // OpenFile's id
 };
 
 struct Fd {
-	int fd_dev_id;
+	int fd_dev_id;     // e.g. disk file, pipe, console I/O
 	off_t fd_offset;
 	int fd_omode;
 	union {
