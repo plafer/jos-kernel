@@ -35,6 +35,63 @@ va_is_dirty(void *va)
 	return (uvpt[PGNUM(va)] & PTE_D) != 0;
 }
 
+bool
+va_is_accessed(void *va)
+{
+	return (uvpt[PGNUM(va)] & PTE_A) != 0;
+}
+
+
+#define MEMBLKSZ 50
+#define MEMBLKTHRESH (0.9 * MEMBLKSZ)
+
+// Adds a new block to the tracked blocks, and possibly evicts old ones
+static void
+manage_eviction(uint32_t newblockno)
+{
+	static uint32_t memblocks[MEMBLKSZ];
+	static uint32_t curblock = 0;
+
+	memblocks[curblock++] = newblockno;
+
+	while (curblock >= MEMBLKTHRESH)
+	{
+		// Evict old blocks
+		int i;
+		int r;
+
+		for (i = 0; i < curblock && curblock > (MEMBLKTHRESH / 2); i++)
+		{
+			void *va = diskaddr(memblocks[i]);
+			bool is_accessed = va_is_accessed(va);
+			bool is_dirty = va_is_dirty(va);
+
+			// Clear the access bit, and if it was dirty, also flush
+			// the block. This is due to a limitation of our system
+			// call interface - you can only remap a page with
+			// some PTE_SYSCALL bit(s).
+			if (is_dirty)
+				flush_block(va);
+			else
+				if ((r = sys_page_map(0, va, 0, va,
+						      PTE_SYSCALL)) < 0)
+					panic("sys_page_map: %e", r);
+
+			if (!is_accessed)
+			{
+				// If it wasn't accessed, evict block.
+				if ((r = sys_page_unmap(0, va)) < 0)
+					panic("Couldn't free block: %e", r);
+
+				// Bring last block in this new hole.
+				memblocks[i] = memblocks[curblock - 1];
+				i--;
+				curblock--;
+			}
+		}
+	}
+}
+
 // Fault any disk block that is read in to memory by
 // loading it from disk.
 static void
@@ -76,6 +133,9 @@ bc_pgfault(struct UTrapframe *utf)
 	// in?)
 	if (bitmap && block_is_free(blockno))
 		panic("reading free block %08x\n", blockno);
+
+	// If we are running low on memory, clean up
+	manage_eviction(blockno);
 }
 
 // Flush the contents of the block containing VA out to disk if
