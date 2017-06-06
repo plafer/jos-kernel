@@ -44,23 +44,27 @@ fs_test(void)
 	*(volatile char*)blk = *(volatile char*)blk;
 	assert((uvpt[PGNUM(blk)] & PTE_D));
 	file_flush(f);
+	log_commit();
 	assert(!(uvpt[PGNUM(blk)] & PTE_D));
 	cprintf("file_flush is good\n");
 
 	if ((r = file_set_size(f, 0)) < 0)
 		panic("file_set_size: %e", r);
+	log_commit();
 	assert(f->f_direct[0] == 0);
 	assert(!(uvpt[PGNUM(f)] & PTE_D));
 	cprintf("file_truncate is good\n");
 
 	if ((r = file_set_size(f, strlen(msg))) < 0)
 		panic("file_set_size 2: %e", r);
+	log_commit();
 	assert(!(uvpt[PGNUM(f)] & PTE_D));
 	if ((r = file_get_block(f, 0, &blk)) < 0)
 		panic("file_get_block 2: %e", r);
 	strcpy(blk, msg);
 	assert((uvpt[PGNUM(blk)] & PTE_D));
 	file_flush(f);
+	log_commit();
 	assert(!(uvpt[PGNUM(blk)] & PTE_D));
 	assert(!(uvpt[PGNUM(f)] & PTE_D));
 	cprintf("file rewrite is good\n");

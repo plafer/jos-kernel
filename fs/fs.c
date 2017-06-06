@@ -3,6 +3,9 @@
 
 #include "fs.h"
 
+struct Super *super;
+uint32_t *bitmap;
+
 // --------------------------------------------------------------
 // Super block
 // --------------------------------------------------------------
@@ -44,6 +47,7 @@ free_block(uint32_t blockno)
 	if (blockno == 0)
 		panic("attempt to free zero block");
 	bitmap[blockno/32] |= 1<<(blockno%32);
+	log_write(diskaddr(blockno));
 }
 
 // Search the bitmap for a free block and allocate it.  When you
@@ -68,7 +72,7 @@ alloc_block(void)
 		if (block_is_free(i))
 		{
 			bitmap[i / 32] &= ~(1 << (i % 32));
-			flush_block(&bitmap[i / 32]);
+			log_write(&bitmap[i / 32]);
 
 			return i;
 		}
@@ -88,11 +92,15 @@ check_bitmap(void)
 
 	// Make sure all bitmap blocks are marked in-use
 	for (i = 0; i * BLKBITSIZE < super->s_nblocks; i++)
-		assert(!block_is_free(2+i));
+		assert(!block_is_free(super->s_bitmapstart + i));
 
 	// Make sure the reserved and root blocks are marked in-use.
 	assert(!block_is_free(0));
 	assert(!block_is_free(1));
+
+	// Make sure the log blocks are marked in-use.
+	for (i = 0; i < super->s_lognblocks; i++)
+		assert(!block_is_free(super->s_logstart + i));
 
 	cprintf("bitmap is good\n");
 }
@@ -121,9 +129,10 @@ fs_init(void)
 	check_super();
 
 	// Set "bitmap" to the beginning of the first bitmap block.
-	bitmap = diskaddr(2);
+	bitmap = diskaddr(super->s_bitmapstart);
 	check_bitmap();
 
+	log_init();
 }
 
 // Find the disk block number slot for the 'filebno'th block in file 'f'.
@@ -418,6 +427,7 @@ file_write(struct File *f, const void *buf, size_t count, off_t offset)
 			return r;
 		bn = MIN(BLKSIZE - pos % BLKSIZE, offset + count - pos);
 		memmove(blk + pos % BLKSIZE, buf, bn);
+
 		pos += bn;
 		buf += bn;
 	}
@@ -476,7 +486,7 @@ file_set_size(struct File *f, off_t newsize)
 	if (f->f_size > newsize)
 		file_truncate_blocks(f, newsize);
 	f->f_size = newsize;
-	flush_block(f);
+	log_write(f);
 	return 0;
 }
 
@@ -494,11 +504,11 @@ file_flush(struct File *f)
 		if (file_block_walk(f, i, &pdiskbno, 0) < 0 ||
 		    pdiskbno == NULL || *pdiskbno == 0)
 			continue;
-		flush_block(diskaddr(*pdiskbno));
+		log_write(diskaddr(*pdiskbno));
 	}
-	flush_block(f);
+	log_write(f);
 	if (f->f_indirect)
-		flush_block(diskaddr(f->f_indirect));
+		log_write(diskaddr(f->f_indirect));
 }
 
 
@@ -508,5 +518,7 @@ fs_sync(void)
 {
 	int i;
 	for (i = 1; i < super->s_nblocks; i++)
-		flush_block(diskaddr(i));
+		// FIXME: Could potentially make block cache infinite loop if
+		// block cache is too small to hold all fs blocks
+		log_write(diskaddr(i));
 }

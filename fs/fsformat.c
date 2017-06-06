@@ -110,13 +110,19 @@ opendisk(const char *name)
 	alloc(BLKSIZE);
 	super = alloc(BLKSIZE);
 	super->s_magic = FS_MAGIC;
-	super->s_nblocks = nblocks;
-	super->s_root.f_type = FTYPE_DIR;
-	strcpy(super->s_root.f_name, "/");
+
+	super->s_logstart = blockof(alloc(LOG_SIZE * BLKSIZE));
+	super->s_lognblocks = LOG_SIZE;
 
 	nbitblocks = (nblocks + BLKBITSIZE - 1) / BLKBITSIZE;
 	bitmap = alloc(nbitblocks * BLKSIZE);
 	memset(bitmap, 0xFF, nbitblocks * BLKSIZE);
+
+	super->s_bitmapstart = blockof(bitmap);
+
+	super->s_nblocks = nblocks;
+	super->s_root.f_type = FTYPE_DIR;
+	strcpy(super->s_root.f_name, "/");
 }
 
 void
@@ -241,4 +247,3 @@ main(int argc, char **argv)
 	finishdisk();
 	return 0;
 }
-

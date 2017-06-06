@@ -212,7 +212,6 @@ serve_read(envid_t envid, union Fsipc *ipc)
 	struct OpenFile *o;
 	int r;
 
-
 	if (debug)
 		cprintf("serve_read %08x %08x %08x\n", envid, req->req_fileid, req->req_n);
 
@@ -252,6 +251,8 @@ serve_write(envid_t envid, struct Fsreq_write *req)
 		return r;
 
 	o->o_fd->fd_offset += r;
+
+	file_flush(o->o_file);
 
 	return r;
 }
@@ -345,8 +346,10 @@ serve(void)
 			cprintf("Invalid request code %d from %08x\n", req, whom);
 			r = -E_INVAL;
 		}
+
 		ipc_send(whom, r, pg, perm);
 		sys_page_unmap(0, fsreq);
+		log_commit();
 	}
 }
 
@@ -366,3 +369,5 @@ umain(int argc, char **argv)
         fs_test();
 	serve();
 }
+
+#undef debug

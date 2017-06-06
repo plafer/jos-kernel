@@ -6,6 +6,7 @@ FSOFILES := 		$(OBJDIR)/fs/ide.o \
 			$(OBJDIR)/fs/fs.o \
 			$(OBJDIR)/fs/serv.o \
 			$(OBJDIR)/fs/test.o \
+			$(OBJDIR)/fs/log.o \
 
 USERAPPS := 		$(OBJDIR)/user/init
 
@@ -74,4 +75,3 @@ all: $(OBJDIR)/fs/fs.img
 #all: $(addsuffix .sym, $(USERAPPS))
 
 #all: $(addsuffix .asm, $(USERAPPS))
-

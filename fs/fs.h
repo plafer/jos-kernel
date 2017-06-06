@@ -11,8 +11,8 @@
 /* Maximum disk size we can handle (3GB) */
 #define DISKSIZE	0xC0000000
 
-struct Super *super;		// superblock
-uint32_t *bitmap;		// bitmap blocks mapped in memory
+extern struct Super *super;		// superblock
+extern uint32_t *bitmap;		// bitmap blocks mapped in memory
 
 /* ide.c */
 bool	ide_probe_disk1(void);
@@ -40,6 +40,11 @@ int	file_set_size(struct File *f, off_t newsize);
 void	file_flush(struct File *f);
 int	file_remove(const char *path);
 void	fs_sync(void);
+
+/* log.c */
+void log_init(void);
+void log_write(void *addr);
+void log_commit(void);
 
 /* int	map_block(uint32_t); */
 bool	block_is_free(uint32_t blockno);

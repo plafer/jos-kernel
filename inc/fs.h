@@ -52,9 +52,14 @@ struct File {
 // File system super-block (both in-memory and on-disk)
 
 #define FS_MAGIC	0x4A0530AE	// related vaguely to 'J\0S!'
+#define LOG_SIZE        101              // 1 block for header, 100 data
 
 struct Super {
 	uint32_t s_magic;		// Magic number: FS_MAGIC
+	uint32_t s_logstart;            // Log start block
+	uint32_t s_lognblocks;          // Number of blocks in the log
+	uint32_t s_bitmapstart;         // Bitmap start block
+	// Data blocks start at the first free block
 	uint32_t s_nblocks;		// Total number of blocks on disk
 	struct File s_root;		// Root directory node
 };

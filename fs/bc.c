@@ -51,8 +51,10 @@ manage_eviction(uint32_t newblockno)
 {
 	static uint32_t memblocks[MEMBLKSZ];
 	static uint32_t curblock = 0;
+	int dirty_swap;
 
 	memblocks[curblock++] = newblockno;
+	dirty_swap = curblock - 1;
 
 	while (curblock >= MEMBLKTHRESH)
 	{
@@ -60,18 +62,31 @@ manage_eviction(uint32_t newblockno)
 		int i;
 		int r;
 
-		for (i = 0; i < curblock && curblock > (MEMBLKTHRESH / 2); i++)
+		for (i = 0;
+		     i < curblock && curblock > (MEMBLKTHRESH / 2);
+		     i++)
 		{
 			void *va = diskaddr(memblocks[i]);
 			bool is_accessed = va_is_accessed(va);
 			bool is_dirty = va_is_dirty(va);
 
-			// Clear the access bit, and if it was dirty, also flush
-			// the block. This is due to a limitation of our system
-			// call interface - you can only remap a page with
-			// some PTE_SYSCALL bit(s).
+			// Clear the access bit
 			if (is_dirty)
-				flush_block(va);
+			{
+				if (dirty_swap > i)
+				{
+					uint32_t t = memblocks[dirty_swap];
+					memblocks[dirty_swap] = memblocks[i];
+					memblocks[i] = t;
+
+					dirty_swap--;
+					continue;
+				}
+				else
+				{
+					break;
+				}
+			}
 			else
 				if ((r = sys_page_map(0, va, 0, va,
 						      PTE_SYSCALL)) < 0)
@@ -135,7 +150,10 @@ bc_pgfault(struct UTrapframe *utf)
 		panic("reading free block %08x\n", blockno);
 
 	// If we are running low on memory, clean up
-	manage_eviction(blockno);
+	// FIXME: Doesn't work since we added journaling, because of the added
+	// complexity that we can't flush dirty blocks whenever we like
+	// anymore.
+	// manage_eviction(blockno);
 }
 
 // Flush the contents of the block containing VA out to disk if
