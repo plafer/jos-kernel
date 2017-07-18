@@ -9,4 +9,9 @@ online, including all the labs.
 This repository holds my implementation of the kernel. The original repository
 is hosted [here](https://pdos.csail.mit.edu/6.828/2016/jos.git).
 
-I am currently implementing lab 5, the file system.
+The parts I implemented include:
++ Bootloader
++ Virtual Memory/Memory management
++ Processes (called environments in JOS)
++ Scheduling
++ The File System
